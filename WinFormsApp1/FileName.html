@@ -1,0 +1,102 @@
+<html>
+<head>
+    <meta charset="utf-8" />
+</head>
+<body>
+    <div class="youtube">
+        <div id="movie"></div>
+    </div>
+    <script>
+        var tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/player_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        var player; // 変数を用意
+        var videos = [];
+
+        window.chrome.webview.addEventListener("message", function (e) {
+            //alert(e.data);
+            //videos.push('_2-CH1mhaE4');
+            //videos.push('xNF9semW-Ng');
+            videos = [e.data];
+            // alert(videos);
+            player.cuePlaylist(videos);
+
+            player.setVolume(100);
+            // player.playVideo();
+        });
+
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('movie', { // 'movie'はSTEP1で生成したdivタグのid名を指定
+                // videoId: videos[0], // 埋め込む動画のID
+                events: {
+                    'onReady': onPlayerReady
+                    , 'onStateChange': onPlayerStateChange 
+                    , 'onPlaybackQualityChange': onPlayerPlaybackQualityChange
+                    , 'onError': onPlayerError
+                }
+                , playerVars: {
+                    'autoplay': 1,
+                    // 'playlist': '_2-CH1mhaE4,xNF9semW-Ng',
+                    // 'controls': 0
+                }
+            });
+        }
+
+        function onPlayerReady(event) {
+            //videos.push('_2-CH1mhaE4');
+            //videos.push('xNF9semW-Ng');
+            //player.cuePlaylist(videos);
+
+            //event.target.setVolume(100);
+            //event.target.playVideo();
+            //setTimeout(timeout(event), 50000);
+        }
+
+        function timeout(event) {
+            alert('timeout' + event.target);
+            event.target.setVolume(100);
+        }
+
+        function onPlayerStateChange(event) {
+            //alert('onPlayerStateChange' + event.target);
+            //event.target.setVolume(100);
+
+            // var state = player.getPlayerState();
+            if (event.date == YT.PlayerState.ENDED) {
+                window.chrome.webview.postMessage('onPlayerStateChange [' + event.date + '] == YT.PlayerState.ENDED');
+            }
+
+            // 頭出し済み状態である
+            if (/*state*/ event.date == YT.PlayerState.CUED) {
+
+                window.chrome.webview.postMessage('onPlayerStateChange [' + event.date + '] == YT.PlayerState.CUED');
+                // 動画を再生する
+                player.playVideo();
+            }
+        }
+
+        // 動画の再生画質が変わると起動
+        function onPlayerPlaybackQualityChange(event) {
+            if (event.data == 'medium') {
+                console.log('onPlayerPlaybackQualityChange:medium');
+            } else if (event.data == 'hd720') {
+                console.log('onPlayerPlaybackQualityChange:hd720');
+            } else {
+                alert('onPlayerPlaybackQualityChange[' + event.data + ']');
+            }
+        }
+
+        function onPlayerError(event) {
+            alert('onPlayerError[' + event.data + ']');
+
+            //2 – リクエストに無効なパラメータ値が含まれています。たとえば、11 文字ではない動画 ID を指定した場合や、動画 ID に無効な文字列（感嘆符やアスタリスクなど）が使われている場合にこのエラーが発生します。
+            //5 – リクエストしたコンテンツは HTML5 プレーヤーで再生できない、または HTML5 プレーヤーに関する別のエラーが発生しました。
+            //100 – リクエストした動画が見つかりません。これは、動画が何らかの理由で削除されている場合や、非公開に設定されている場合に発生します。
+            //101 – リクエストした動画の所有者が、埋め込み動画プレーヤーでの再生を許可していません。
+            //150 – このエラーは 101 と同じです。番号は異なりますが、101 のエラーと内容は同じです。
+        }
+    </script>
+</body>
+</html>
